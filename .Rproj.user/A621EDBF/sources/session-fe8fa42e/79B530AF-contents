@@ -1,0 +1,231 @@
+library(tidyverse)
+library(GGally)
+library(dplyr)
+library(magrittr)
+library(corrplot)
+
+customers_data <- read.csv("Customers.csv")
+head(customers_data)
+
+str(customers_data)
+summary(customers_data)
+
+missing_value <- sum(is.na(customers_data))
+missing_value
+
+# Distribution of customers based on gender
+
+customers_data$Gender <- factor(customers_data$Gender)
+gender_distribution <- customers_data %>%
+  group_by(Gender) %>%
+  summarise(count = n())
+
+# Bar plot
+ggplot(gender_distribution, aes(x = Gender, y = count, fill = Gender)) +
+  geom_col() +
+  labs(title = 'Gender Distribution of Customers') +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  
+
+
+#Distribution of customers based on age
+
+customers_data <- customers_data %>%
+  filter(Age > 0)
+
+customers_data$Age[customers_data$Age == 0] <- mean(customers_data$Age, na.rm = TRUE)
+
+customers_data$AgeCategory <- ifelse(customers_data$Age < 18, "Under 18",
+                                     ifelse(customers_data$Age < 35, "18-34",
+                                            ifelse(customers_data$Age < 50, "35-49",
+                                                   ifelse(customers_data$Age < 65, "50-64", "65+"))))
+
+ggplot(customers_data, aes(x = AgeCategory, y = Age, fill = AgeCategory)) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = 'Set3') +
+  labs(title = 'Age Distribution of Customers',
+       x = 'Age Category',
+       y = 'Age') +
+  theme_minimal() + theme(panel.background = element_rect(fill = 'lightgray'))
+
+# Most common professions among customers
+common_professions <- customers_data %>%
+  group_by(Profession) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+# Bar plot 
+ggplot(head(common_professions, 10), aes(x = reorder(Profession, -count), y = count)) +
+  geom_bar(stat = 'identity') +
+  coord_flip() +
+  labs(title = 'Top 10 Most Common Professions', x = 'Profession', y = 'Count')
+
+# Age groups of customers
+age_groups <- customers_data %>%
+  mutate(age_group = cut(Age, breaks = c(0, 20, 30, 40, 50, 60, Inf), labels = c('0-20', '21-30', '31-40', '41-50', '51-60', '60+'))) %>%
+  group_by(age_group) %>%
+  summarise(count = n())
+
+# Bar plot 
+ggplot(age_groups, aes(x = age_group, y = count, fill = age_group)) +
+  geom_bar(stat = 'identity') +
+  labs(title = 'Age Groups of Customers', x = 'Age Group', y = 'Count')
+
+
+#customers spending behaviours
+
+# Distribution of spending scores
+ggplot(customers_data, aes(x = Spending.Score..1.100.)) +
+  geom_histogram(binwidth = 5, fill = 'green', color = 'black', alpha = 0.7) +
+  labs(title = 'Distribution of Spending Scores', x = 'Spending Score', y = 'Count')
+
+
+# Create spending segments (you can adjust the thresholds)
+customers_data$SpendingSegment <- ifelse(customers_data$Spending.Score..1.100. > 80, 'High-Spending',
+                                         ifelse(customers_data$Spending.Score..1.100. < 40, 'Low-Spending', 'Medium-Spending'))
+
+# Bar plot 
+ggplot(customers_data, aes(x = SpendingSegment, fill = SpendingSegment)) +
+  geom_bar() +
+  labs(title = 'Distribution of Spending Segments', x = 'Spending Segment', y = 'Count')
+
+
+
+#analysis of income by gender
+average_income_by_gender <- customers_data %>%
+  group_by(Gender) %>%
+  summarise(Average_Income = mean(Annual.Income...., na.rm = TRUE))
+
+# Print the result
+print(average_income_by_gender)
+#plot
+gender_data <- customers_data %>%
+  group_by(Gender) %>%
+  summarise(Average_Income = mean(Annual.Income...., na.rm = TRUE))
+
+# Create a pie chart to visualize the distribution
+pie_plot <- ggplot(gender_data, aes(x = "", y = Average_Income, fill = Gender)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = scales::percent(Average_Income/sum(Average_Income))), position = position_stack(vjust = 0.5)) +
+  labs(title = "Average Income by Gender",
+       x = NULL,
+       y = NULL) +
+  theme_void()
+
+
+print(pie_plot)
+
+#Assuming your data contains a column named 'Profession'
+
+customers_data$Profession[is.na(customers_data$Profession) | customers_data$Profession == ""] <- "Unknown"
+
+profession_data <- customers_data %>%
+  group_by(Profession) %>%
+  summarise(Average_Income = mean(Annual.Income...., na.rm = TRUE))
+
+# Create a pie chart to visualize the distribution
+pie_plot_profession <- ggplot(profession_data, aes(x = "", y = Average_Income, fill = Profession)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = scales::percent(Average_Income/sum(Average_Income))), position = position_stack(vjust = 0.5)) +
+  labs(title = "Average Income by Profession",
+       x = NULL,
+       y = NULL) +
+  theme_void()
+
+print(pie_plot_profession)
+
+
+
+
+# analyze the correlation between family size, work experience, and spending behavior
+
+
+# Select relevant columns
+selected_columns <- c("Age", "Annual.Income....", "Spending.Score..1.100.", "Work.Experience", "Family.Size")
+correlation_matrix <- cor(customers_data[, selected_columns])
+correlation_data <- as.data.frame(as.table(correlation_matrix))
+names(correlation_data) <- c("Var1", "Var2", "Correlation")
+
+# heatmap
+heatmap <- ggplot(correlation_data, aes(Var1, Var2, fill = Correlation)) +
+  geom_tile(color = "white") +
+  scale_fill_gradient2(low = "red", mid = "white", high = "blue", midpoint = 0) +
+  labs(title = "Correlation Heatmap",
+       x = "Variables",
+       y = "Variables") +
+  theme_minimal()
+
+# Add text annotations for correlation values
+heatmap + geom_text(aes(label = round(Correlation, 2)), vjust = 1)
+##
+
+
+# Group by Gender and calculate the mean spending score for each group
+gender_spending <- customer_data %>%
+  group_by(Gender) %>%
+  summarise(mean_spending = mean(Spending.Score..1.100., na.rm = TRUE))
+
+# Print the result
+print(gender_spending)
+
+# Find the gender with the maximum spending score
+max_spending <- gender_spending %>%
+  group_by(Gender) %>%
+  summarize(max_spending = max(mean_spending, na.rm = TRUE))
+
+# Plot the maximum spending score by gender
+ggplot(max_spending, aes(x = Gender, y = max_spending, fill = Gender)) +
+  geom_col(position = 'dodge', width = 0.7, color = 'white') +
+  geom_text(aes(label = sprintf("%.1f", max_spending)), position = position_dodge(width = 0.7), vjust = -0.5) +
+  labs(title = 'Maximum Spending Score by Gender',
+       x = 'Gender',
+       y = 'Maximum Spending Score') +
+  theme_minimal()
+
+#k mean clustering
+# Elbow Method to determine optimal k
+wcss_values <- numeric()
+
+# Assuming 'clustering_data' is your dataset
+for (i in 1:10) {
+  kmeans_model <- kmeans(scale(clustering_data), centers = i, nstart = 25)
+  wcss_values[i] <- kmeans_model$tot.withinss
+}
+
+# Plot the elbow curve
+plot(1:10, wcss_values, type = "b", pch = 19, frame = FALSE, col = "blue",
+     xlab = "Number of Clusters (k)", ylab = "Within-Cluster Sum of Squares (WCSS)",
+     main = "Elbow Method for Optimal k")
+
+# Find the optimal k (elbow point)
+diff_wcss <- diff(wcss_values)
+optimal_k <- which(diff_wcss == min(diff_wcss[-1])) + 1
+
+# Print the optimal k in the terminal
+cat("Optimal number of clusters (k) from the elbow method:", optimal_k, "\n")
+
+
+# Select relevant features for clustering
+clustering_data <- customers_data %>%
+  select(Annual.Income...., Spending.Score..1.100.)
+scaled_data <- scale(clustering_data)
+
+#now
+k <- 3
+kmeans_model <- kmeans(scaled_data, centers = k, nstart = 25)
+customers_data$Cluster <- kmeans_model$cluster
+
+
+# Print cluster assignments in the terminal
+cat("Cluster Assignments:\n")
+cat("CustomerID\tCluster\n")
+cat(paste(customers_data$CustomerID, customers_data$Cluster, sep = "\t"), "\n")
+
+# Visualize the clusters
+ggplot(customers_data, aes(x = Annual.Income...., y = Spending.Score..1.100., color = factor(Cluster))) +
+  geom_point() +
+  labs(title = "Customer Segmentation",
+       x = "Annual Income",
+       y = "Spending Score") +
+  theme_minimal()
