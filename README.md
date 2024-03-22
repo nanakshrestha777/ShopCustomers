@@ -18,26 +18,23 @@ The chosen data science project aims to achieve the following objectives:
 10. **Summary Statistics and Visualization:** Provide summary statistics and visualize insights to facilitate better decision-making.
 
 ## Files Included
-- **customer_data.csv:** The dataset containing customer information.
-- **customer_analysis.ipynb:** Jupyter Notebook containing the Python code for data analysis.
+- **Customers.csv:** The dataset containing customer information.
+- **Shop_customers.R:** R script containing the code for data analysis.
 - **README.md:** Markdown file providing an overview of the project and instructions for usage.
 
 ## Usage
 1. **Clone the Repository:** Clone this repository to your local machine using the following command:
     ```bash
-    git clone https://github.com/your-username/shop-customer-data-analysis.git
+    git clone https://github.com/nanakshrestha777/ShopCustomers.git
     ```
-2. **Install Dependencies:** Ensure you have Python and Jupyter Notebook installed. Additionally, install required libraries by running:
-    ```bash
-    pip install -r requirements.txt
-    ```
-3. **Run the Notebook:** Open the `customer_analysis.ipynb` file in Jupyter Notebook to view the analysis and execute the code cells.
+2. **Run the Analysis:** To run the analysis, execute the `shop_customers.R` script in an R environment. You can do this in RStudio or any other R environment you prefer.
 
 ## Conclusion
 This project provides valuable insights into the shop's customer base, facilitating informed decision-making and targeted marketing strategies. By understanding customer segmentation, spending patterns, and other demographics, the shop owner can optimize operations and enhance customer satisfaction.
 
 ## Contributors
-- Your Name
+- [Nanak Shrestha](https://github.com/nanakshrestha777)
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+[MIT](https://choosealicense.com/licenses/mit/)
